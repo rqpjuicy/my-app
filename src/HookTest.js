@@ -40,10 +40,9 @@ function FruitReducer(state,action){
 }
 
 export default function HookTest() {
-    //新增空格
     const [fruit, setFruit] = useState('草莓');
     //const [fruits, setFruits] = useState(['草莓', '香蕉']);
-    const [fruits, dispatch] = useReducer(FruitReducer,['草莓', '香蕉']);
+    const [fruits, dispatch] = useReducer(FruitReducer,['草莓', '香蕉',"苹果"]);
     return (
         //     <>
         //        <Provider value={{ fruits, setFruits }}>
