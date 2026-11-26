@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户反馈工单管理</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --line: #e5eaf2;
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .06);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #6366f1, #4338ca);
+      color: #fff;
+      display: grid; place-items: center;
+      font-size: 20px;
+      font-weight: 700;
+      box-shadow: 0 6px 14px rgba(79, 70, 229, .3);
+    }
+    .brand-name { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+    .brand-sub { font-size: 12px; color: var(--muted); }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, background .15s;
+      display: inline-flex; align-items: center; gap: 7px;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 6px 14px rgba(79, 70, 229, .25); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-ghost { background: #f1f3f9; color: var(--text); }
+    .btn-ghost:hover { background: #e6e9f2; }
+    .btn-danger { background: #fef2f2; color: #dc2626; }
+    .btn-danger:hover { background: #fee2e2; }
+    .btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; }
+
+    main { max-width: 1200px; margin: 0 auto; padding: 36px 20px 64px; }
+
+    .page-title { font-size: 28px; font-weight: 800; letter-spacing: -.5px; }
+    .page-desc { color: var(--muted); margin-top: 6px; font-size: 14px; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin: 28px 0;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat::after {
+      content: "";
+      position: absolute; right: -18px; top: -18px;
+      width: 78px; height: 78px; border-radius: 50%;
+      background: var(--accent, #eef2ff); opacity: .6;
+    }
+    .stat-label { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .stat-value { font-size: 30px; font-weight: 800; line-height: 1.3; margin-top: 4px; }
+    .stat-icon { position: absolute; right: 18px; bottom: 16px; font-size: 22px; opacity: .75; }
+
+    .toolbar {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .search {
+      flex: 1; min-width: 220px; position: relative;
+    }
+    .search input {
+      width: 100%;
+      padding: 11px 14px 11px 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .search input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+    .search span { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+
+    select.filter {
+      padding: 11px 32px 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+    }
+    select.filter:focus { border-color: var(--primary); }
+    .count { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 18px;
+    }
+
+    .ticket {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      display: flex; flex-direction: column;
+      gap: 14px;
+      transition: transform .18s, box-shadow .18s;
+    }
+    .ticket:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(15,23,42,.1); }
+
+    .ticket-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .ticket-id { font-size: 11px; color: #94a3b8; font-weight: 600; letter-spacing: .5px; }
+    .ticket-title { font-size: 16px; font-weight: 700; margin-top: 3px; word-break: break-word; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700;
+      padding: 4px 10px; border-radius: 999px;
+      white-space: nowrap;
+    }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .urgency-low { background: #f1f5f9; color: #64748b; }
+    .urgency-medium { background: #eff6ff; color: #2563eb; }
+    .urgency-high { background: #fff7ed; color: #ea580c; }
+    .urgency-urgent { background: #fef2f2; color: #dc2626; }
+    .status-pending { background: #fff7ed; color: #c2410c; }
+    .status-doing { background: #eef2ff; color: #4f46e5; }
+    .status-done { background: #ecfdf5; color: #059669; }
+
+    .ticket-desc { font-size: 13px; color: var(--muted); min-height: 42px; word-break: break-word; }
+    .ticket-meta { font-size: 12px; color: #94a3b8; display: flex; gap: 14px; flex-wrap: wrap; }
+
+    .progress-wrap { margin-top: auto; }
+    .progress-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .progress-top strong { color: var(--text); }
+    .progress-track { height: 7px; background: #eef1f6; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; transition: width .3s; }
+
+    .ticket-actions { display: flex; gap: 8px; border-top: 1px solid var(--line); padding-top: 14px; }
+    .ticket-actions .btn:last-child { margin-left: auto; }
+
+    .empty {
+      text-align: center; padding: 70px 20px;
+      background: var(--surface); border: 1px dashed #cbd5e1;
+      border-radius: var(--radius); color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; opacity: .5; }
+    .empty h3 { color: var(--text); margin: 10px 0 4px; font-size: 17px; }
+
+    .modal-mask {
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, .5);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px; z-index: 50;
+      backdrop-filter: blur(3px);
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      background: var(--surface);
+      width: min(520px, 100%);
+      max-height: 90vh; overflow-y: auto;
+      border-radius: 20px;
+      padding: 26px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.2);
+      animation: pop .2s ease-out;
+    }
+    @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-head h2 { font-size: 19px; }
+    .close-x { background: none; border: 0; font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; }
+    .field input[type="text"], .field textarea, .field select {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 10px;
+      font-size: 14px; font-family: inherit; outline: none;
+      background: #fff; color: var(--text);
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+    .field textarea { resize: vertical; min-height: 84px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .range-row { display: flex; align-items: center; gap: 12px; }
+    .range-row input[type="range"] { flex: 1; accent-color: var(--primary); }
+    .range-value { width: 48px; text-align: right; font-weight: 700; font-size: 14px; }
+    .modal-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translate(-50%, 20px);
+      background: #1e293b; color: #fff;
+      padding: 11px 20px; border-radius: 10px; font-size: 13px;
+      opacity: 0; pointer-events: none; transition: all .25s; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 720px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .field-row { grid-template-columns: 1fr; }
+      .count { margin-left: 0; }
+      .page-title { font-size: 23px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">✦</div>
+      <div>
+        <div class="brand-name">客户反馈工单管理</div>
+        <div class="brand-sub">Feedback Ticket Board</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">＋ 新建工单</button>
+  </header>
+
+  <main>
+    <div class="page-title">问题工单总览</div>
+    <div class="page-desc">集中记录客户反馈的问题，跟踪紧急程度与处理进度。</div>
+
+    <section class="stats">
+      <div class="stat" style="--accent:#eef2ff">
+        <div class="stat-label">工单总数</div>
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-icon">📋</div>
+      </div>
+      <div class="stat" style="--accent:#fff7ed">
+        <div class="stat-label">待处理</div>
+        <div class="stat-value" id="statPending">0</div>
+        <div class="stat-icon">⏳</div>
+      </div>
+      <div class="stat" style="--accent:#eef2ff">
+        <div class="stat-label">处理中</div>
+        <div class="stat-value" id="statDoing">0</div>
+        <div class="stat-icon">🔧</div>
+      </div>
+      <div class="stat" style="--accent:#ecfdf5">
+        <div class="stat-label">已解决</div>
+        <div class="stat-value" id="statDone">0</div>
+        <div class="stat-icon">✅</div>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <div class="search">
+        <span>🔍</span>
+        <input id="searchInput" type="text" placeholder="搜索问题标题、描述或客户…" oninput="applyFilters()">
+      </div>
+      <select class="filter" id="urgencyFilter" onchange="applyFilters()">
+        <option value="all">全部紧急程度</option>
+        <option value="urgent">紧急</option>
+        <option value="high">高</option>
+        <option value="medium">中</option>
+        <option value="low">低</option>
+      </select>
+      <select class="filter" id="statusFilter" onchange="applyFilters()">
+        <option value="all">全部状态</option>
+        <option value="pending">待处理</option>
+        <option value="doing">处理中</option>
+        <option value="done">已解决</option>
+      </select>
+      <div class="count" id="resultCount"></div>
+    </section>
+
+    <section class="grid" id="ticketGrid"></section>
+    <div class="empty" id="emptyState" style="display:none">
+      <div class="empty-icon">🗂️</div>
+      <h3>暂无匹配的工单</h3>
+      <p>试试调整筛选条件，或新建一条客户反馈工单。</p>
+    </div>
+  </main>
+
+  <div class="modal-mask" id="modalMask" onclick="if(event.target===this) closeModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modalTitle">新建工单</h2>
+        <button class="close-x" onclick="closeModal()" aria-label="关闭">×</button>
+      </div>
+      <form id="ticketForm" onsubmit="saveTicket(event)">
+        <input type="hidden" id="ticketId">
+        <div class="field">
+          <label for="titleInput">问题标题 <span style="color:#dc2626">*</span></label>
+          <input type="text" id="titleInput" placeholder="例如：订单信息不对" required maxlength="60">
+        </div>
+        <div class="field">
+          <label for="descInput">问题内容</label>
+          <textarea id="descInput" placeholder="详细描述客户反馈的问题、复现步骤或影响范围…" maxlength="500"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="customerInput">客户 / 来源</label>
+            <input type="text" id="customerInput" placeholder="选填，例如：张先生" maxlength="30">
+          </div>
+          <div class="field">
+            <label for="urgencyInput">紧急程度</label>
+            <select id="urgencyInput">
+              <option value="low">低 — 常规咨询</option>
+              <option value="medium" selected>中 — 影响使用</option>
+              <option value="high">高 — 业务受阻</option>
+              <option value="urgent">紧急 — 大面积故障</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="statusInput">处理进度状态</label>
+          <select id="statusInput" onchange="syncProgressFromStatus()">
+            <option value="pending">待处理</option>
+            <option value="doing">处理中</option>
+            <option value="done">已解决</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="progressInput">完成百分比</label>
+          <div class="range-row">
+            <input type="range" id="progressInput" min="0" max="100" step="5" value="0" oninput="document.getElementById('progressText').textContent=this.value+'%'">
+            <span class="range-value" id="progressText">0%</span>
+          </div>
+          <div class="hint">切换状态时会自动填入建议进度，也可以手动调整。</div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">取消</button>
+          <button type="submit" class="btn btn-primary">保存工单</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'feedback_tickets_v1';
+
+    const seedTickets = [
+      { id: 1, title: '系统无法登录', desc: '多位客户反馈输入验证码后提示“验证失败”，无法进入后台，影响日常操作。', customer: '多位客户', urgency: 'urgent', status: 'pending', progress: 0, createdAt: Date.now() - 1000 * 60 * 35 },
+      { id: 2, title: '订单信息不对', desc: '客户反馈订单收货地址与下单时填写的不一致，需核对后台数据并修正。', customer: '李女士', urgency: 'high', status: 'doing', progress: 65, createdAt: Date.now() - 1000 * 60 * 60 * 3 },
+      { id: 3, title: '发票开具延迟', desc: '上月申请的增值税发票迟迟未寄出，客户希望本周内收到。', customer: '王先生', urgency: 'medium', status: 'doing', progress: 40, createdAt: Date.now() - 1000 * 60 * 60 * 20 },
+      { id: 4, title: '退款未到账', desc: '客户申请退款已超过 3 个工作日仍未到账，现已联系支付渠道处理完成。', customer: '陈女士', urgency: 'high', status: 'done', progress: 100, createdAt: Date.now() - 1000 * 60 * 60 * 48 },
+      { id: 5, title: '商品页面加载缓慢', desc: '部分商品详情页图片加载超过 10 秒，建议优化图片资源。', customer: '内部巡检', urgency: 'low', status: 'pending', progress: 0, createdAt: Date.now() - 1000 * 60 * 60 * 72 }
+    ];
+
+    const urgencyMeta = {
+      low: { label: '低', cls: 'urgency-low', color: '#64748b' },
+      medium: { label: '中', cls: 'urgency-medium', color: '#3b82f6' },
+      high: { label: '高', cls: 'urgency-high', color: '#f97316' },
+      urgent: { label: '紧急', cls: 'urgency-urgent', color: '#ef4444' }
+    };
+    const statusMeta = {
+      pending: { label: '待处理', cls: 'status-pending', progress: 0 },
+      doing: { label: '处理中', cls: 'status-doing', progress: 50 },
+      done: { label: '已解决', cls: 'status-done', progress: 100 }
+    };
+    const nextStatus = { pending: 'doing', doing: 'done' };
+
+    let tickets = loadTickets();
+    let editingId = null;
+
+    function loadTickets() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) { /* 存储不可用时退回示例数据 */ }
+      return seedTickets.map(t => ({ ...t }));
+    }
+
+    function saveToStorage() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets)); }
+      catch (e) { /* 静态页面在受限环境下仍可正常使用 */ }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function formatTime(ts) {
+      const d = new Date(ts);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function render() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const uf = document.getElementById('urgencyFilter').value;
+      const sf = document.getElementById('statusFilter').value;
+
+      const list = tickets.filter(t => {
+        const matchesText = !q || [t.title, t.desc, t.customer].some(v => String(v || '').toLowerCase().includes(q));
+        return matchesText && (uf === 'all' || t.urgency === uf) && (sf === 'all' || t.status === sf);
+      }).sort((a, b) => b.createdAt - a.createdAt);
+
+      const counts = { all: tickets.length, pending: 0, doing: 0, done: 0 };
+      tickets.forEach(t => counts[t.status]++);
+      document.getElementById('statTotal').textContent = counts.all;
+      document.getElementById('statPending').textContent = counts.pending;
+      document.getElementById('statDoing').textContent = counts.doing;
+      document.getElementById('statDone').textContent = counts.done;
+      document.getElementById('resultCount').textContent = `共 ${list.length} 条工单`;
+
+      document.getElementById('emptyState').style.display = list.length ? 'none' : 'block';
+      document.getElementById('ticketGrid').innerHTML = list.map(t => {
+        const u = urgencyMeta[t.urgency] || urgencyMeta.low;
+        const s = statusMeta[t.status] || statusMeta.pending;
+        const progress = Math.max(0, Math.min(100, Number(t.progress) || 0));
+        return `
+          <article class="ticket">
+            <div class="ticket-head">
+              <div>
+                <div class="ticket-id">#${String(t.id).padStart(4, '0')}</div>
+                <div class="ticket-title">${escapeHtml(t.title)}</div>
+              </div>
+              <span class="badge ${u.cls}">${u.label}</span>
+            </div>
+            <div class="ticket-desc">${escapeHtml(t.desc) || '暂无详细描述'}</div>
+            <div class="ticket-meta">
+              <span>👤 ${escapeHtml(t.customer) || '未填写来源'}</span>
+              <span>🕒 ${formatTime(t.createdAt)}</span>
+              <span class="badge ${s.cls}">${s.label}</span>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-top"><span>处理进度</span><strong>${progress}%</strong></div>
+              <div class="progress-track"><div class="progress-fill" style="width:${progress}%;background:${s.cls === 'status-done' ? '#10b981' : u.color}"></div></div>
+            </div>
+            <div class="ticket-actions">
+              ${nextStatus[t.status] ? `<button class="btn btn-ghost btn-sm" onclick="advanceStatus(${t.id})">${t.status === 'pending' ? '开始处理' : '标记解决'}</button>` : '<button class="btn btn-ghost btn-sm" disabled style="opacity:.5;cursor:default">已完结</button>'}
+              <button class="btn btn-ghost btn-sm" onclick="openModal(${t.id})">编辑</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteTicket(${t.id})">删除</button>
+            </div>
+          </article>`;
+      }).join('');
+    }
+
+    function applyFilters() { render(); }
+
+    function openModal(id) {
+      editingId = id ?? null;
+      const form = document.getElementById('ticketForm');
+      form.reset();
+      if (editingId !== null) {
+        const t = tickets.find(item => item.id === editingId);
+        if (!t) return;
+        document.getElementById('modalTitle').textContent = '编辑工单';
+        document.getElementById('ticketId').value = t.id;
+        document.getElementById('titleInput').value = t.title;
+        document.getElementById('descInput').value = t.desc || '';
+        document.getElementById('customerInput').value = t.customer || '';
+        document.getElementById('urgencyInput').value = t.urgency;
+        document.getElementById('statusInput').value = t.status;
+        document.getElementById('progressInput').value = t.progress;
+      } else {
+        document.getElementById('modalTitle').textContent = '新建工单';
+        document.getElementById('progressInput').value = 0;
+      }
+      document.getElementById('progressText').textContent = document.getElementById('progressInput').value + '%';
+      document.getElementById('modalMask').classList.add('show');
+      document.getElementById('titleInput').focus();
+    }
+
+    function closeModal() { document.getElementById('modalMask').classList.remove('show'); }
+
+    function syncProgressFromStatus() {
+      const status = document.getElementById('statusInput').value;
+      const value = statusMeta[status].progress;
+      document.getElementById('progressInput').value = value;
+      document.getElementById('progressText').textContent = value + '%';
+    }
+
+    function saveTicket(event) {
+      event.preventDefault();
+      const payload = {
+        title: document.getElementById('titleInput').value.trim(),
+        desc: document.getElementById('descInput').value.trim(),
+        customer: document.getElementById('customerInput').value.trim(),
+        urgency: document.getElementById('urgencyInput').value,
+        status: document.getElementById('statusInput').value,
+        progress: Number(document.getElementById('progressInput').value)
+      };
+      if (!payload.title) return;
+      if (payload.status === 'done') payload.progress = 100;
+      if (payload.status === 'pending' && payload.progress > 0) payload.status = 'doing';
+
+      if (editingId !== null) {
+        const t = tickets.find(item => item.id === editingId);
+        if (t) Object.assign(t, payload);
+        showToast('工单已更新');
+      } else {
+        tickets.push({ id: Date.now(), createdAt: Date.now(), ...payload });
+        showToast('新工单已创建');
+      }
+      saveToStorage();
+      closeModal();
+      render();
+    }
+
+    function advanceStatus(id) {
+      const t = tickets.find(item => item.id === id);
+      if (!t || !nextStatus[t.status]) return;
+      t.status = nextStatus[t.status];
+      t.progress = statusMeta[t.status].progress;
+      saveToStorage();
+      render();
+      showToast(t.status === 'done' ? '工单已标记为解决' : '工单已进入处理中');
+    }
+
+    function deleteTicket(id) {
+      const t = tickets.find(item => item.id === id);
+      if (!t || !confirm(`确定删除工单「${t.title}」吗？`)) return;
+      tickets = tickets.filter(item => item.id !== id);
+      saveToStorage();
+      render();
+      showToast('工单已删除');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    render();
+  </script>
+</body>
+</html>
