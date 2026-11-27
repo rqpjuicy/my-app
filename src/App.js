@@ -8,6 +8,7 @@ import CartSample from './CartSample';
 import HookTest from './HookTest';
 // import WidthForm from './AndForm';
 import ListTest from './ListTest';
+import FeedbackBoard from './FeedbackBoard';
 import { BrowserRouter, HashRouter, Route, Link, Redirect, Switch } from 'react-router-dom'
 //import DetailTest from './DetailTest';
 
@@ -93,6 +94,9 @@ export default class App extends Component {
             <li>
               <Link to="/test">守卫测试</Link>
             </li>
+            <li>
+              <Link to="/feedback">客户反馈工单</Link>
+            </li>
           </ul>
         </div>
         <div>
@@ -104,6 +108,7 @@ export default class App extends Component {
               props=><Test {...props} isLogin={true}></Test>
             }></Route>  */}
             <UpRoute path="/test" component={Test} isLogin={false}></UpRoute>
+            <Route path="/feedback" component={FeedbackBoard}></Route>
             <Route component={Test404}></Route> 
           </Switch>
           <Suspense fallback={<div>loading....</div>}>
